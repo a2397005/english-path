@@ -1,10 +1,3 @@
-import { elem1 } from "./elem1.js";
-import { elem2 } from "./elem2.js";
-import { elem3 } from "./elem3.js";
-import { middle } from "./middle.js";
-import { high } from "./high.js";
-import { toefl } from "./toefl.js";
-
 export const LEVELS = [
   { id: "elem1", label: "國小低年級", sub: "1-2年級", cefr: "Pre-A1", step: 1 },
   { id: "elem2", label: "國小中年級", sub: "3-4年級", cefr: "A1", step: 2 },
@@ -14,11 +7,16 @@ export const LEVELS = [
   { id: "toefl", label: "托福 TOEFL", sub: "留學/檢定", cefr: "B2-C1", step: 6 },
 ];
 
-export const VOCAB = {
-  elem1,
-  elem2,
-  elem3,
-  middle,
-  high,
-  toefl,
+const loaders = {
+  elem1: () => import("./elem1.js"),
+  elem2: () => import("./elem2.js"),
+  elem3: () => import("./elem3.js"),
+  middle: () => import("./middle.js"),
+  high: () => import("./high.js"),
+  toefl: () => import("./toefl.js"),
 };
+
+export async function loadVocabulary(level) {
+  const module = await loaders[level]();
+  return module[level];
+}

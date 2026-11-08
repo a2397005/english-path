@@ -1,25 +1,32 @@
 import { useState, useMemo } from "react";
 import { Search } from "lucide-react";
-import { VOCAB, LEVELS } from "../data/vocab/index.js";
+import { LEVELS } from "../data/vocab/index.js";
+import useVocabulary from "../data/vocab/useVocabulary.js";
 import { C } from "../theme.js";
+import Pagination, { PAGE_SIZE } from "../components/Pagination.jsx";
 import SpeakButton from "../components/SpeakButton.jsx";
 
 export default function BankPage({ rate }) {
   const [query, setQuery] = useState("");
   const [filterLevel, setFilterLevel] = useState("all");
 
-  const all = useMemo(() => {
-    return LEVELS.flatMap((lv) => VOCAB[lv.id].map((w) => ({ ...w, levelId: lv.id, levelLabel: lv.label })));
-  }, []);
+  const [page, setPage] = useState(1);
+  const { words, error } = useVocabulary("all");
+  const search = query.trim();
+  const start = (page - 1) * PAGE_SIZE;
 
-  const filtered = all.filter((w) => {
-    const matchLevel = filterLevel === "all" || w.levelId === filterLevel;
-    const matchQuery =
-      query.trim() === "" ||
-      w.word.toLowerCase().includes(query.toLowerCase()) ||
-      w.meaning.includes(query);
-    return matchLevel && matchQuery;
-  });
+  const filtered = useMemo(() => {
+    const englishSearch = search.toLowerCase();
+    return words?.filter((w) =>
+      (filterLevel === "all" || w.levelId === filterLevel) &&
+      (w.word.toLowerCase().includes(englishSearch) || w.meaning.includes(search))
+    ) ?? [];
+  }, [words, filterLevel, search]);
+
+  function selectLevel(level) {
+    setFilterLevel(level);
+    setPage(1);
+  }
 
   return (
     <div>
@@ -28,7 +35,10 @@ export default function BankPage({ rate }) {
           <Search size={18} style={{ color: C.inkSoft }} />
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="搜尋英文單字或中文意思…"
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: C.ink }}
@@ -36,7 +46,7 @@ export default function BankPage({ rate }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setFilterLevel("all")}
+            onClick={() => selectLevel("all")}
             className="px-3 py-2 rounded-full text-xs sm:text-sm font-semibold"
             style={{ backgroundColor: filterLevel === "all" ? C.navy : C.card, color: filterLevel === "all" ? "#fff" : C.inkSoft }}
           >
@@ -45,7 +55,7 @@ export default function BankPage({ rate }) {
           {LEVELS.map((lv) => (
             <button
               key={lv.id}
-              onClick={() => setFilterLevel(lv.id)}
+              onClick={() => selectLevel(lv.id)}
               className="px-3 py-2 rounded-full text-xs sm:text-sm font-semibold"
               style={{ backgroundColor: filterLevel === lv.id ? C.navy : C.card, color: filterLevel === lv.id ? "#fff" : C.inkSoft }}
             >
@@ -55,18 +65,21 @@ export default function BankPage({ rate }) {
         </div>
       </div>
 
-      <div className="text-xs mt-3" style={{ color: C.inkSoft }}>
-        共 {filtered.length} 筆結果（詞庫總計 {all.length} 個單字）
+      <div role="status" className="text-xs mt-3" style={{ color: C.inkSoft }}>
+        {words
+          ? `共 ${filtered.length} 筆結果（詞庫總計 ${words.length} 個單字）`
+          : error ? "無法載入詞庫，請重新整理頁面。" : "正在載入詞庫…"}
       </div>
+      <Pagination count={filtered.length} page={page} setPage={setPage} />
 
-      <div className="mt-3 rounded-2xl overflow-hidden" style={{ backgroundColor: C.card, boxShadow: "0 1px 3px rgba(22,33,62,0.08)" }}>
+      {words && <div className="mt-3 rounded-2xl overflow-hidden" style={{ backgroundColor: C.card, boxShadow: "0 1px 3px rgba(22,33,62,0.08)" }}>
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-sm" style={{ color: C.inkSoft }}>
             找不到符合的單字，換個關鍵字試試看。
           </div>
         ) : (
-          filtered.map((w, idx) => (
-            <div key={w.word + idx} className="flex items-center gap-4 px-5 py-4" style={{ borderTop: idx === 0 ? "none" : "1px solid #EEF1F5" }}>
+          filtered.slice(start, start + PAGE_SIZE).map((w, idx) => (
+            <div key={`${w.levelId}:${w.word}`} className="flex items-center gap-4 px-5 py-4" style={{ borderTop: idx === 0 ? "none" : "1px solid #EEF1F5" }}>
               <SpeakButton text={w.word} rate={rate} />
               <div className="flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -79,7 +92,7 @@ export default function BankPage({ rate }) {
             </div>
           ))
         )}
-      </div>
+      </div>}
     </div>
   );
 }

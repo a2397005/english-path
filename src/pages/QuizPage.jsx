@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CheckCircle2, XCircle, RotateCcw, ChevronRight } from "lucide-react";
-import { VOCAB, LEVELS } from "../data/vocab/index.js";
+import { LEVELS } from "../data/vocab/index.js";
+import useVocabulary from "../data/vocab/useVocabulary.js";
 import { QUIZ } from "../data/quiz.js";
 import { C } from "../theme.js";
 import { generateVocabQuestions, VOCAB_QUIZ_COUNT } from "../utils/speech.js";
@@ -8,6 +9,7 @@ import LevelTabs from "../components/LevelTabs.jsx";
 import SpeakButton from "../components/SpeakButton.jsx";
 
 export default function QuizPage({ level, setLevel, rate }) {
+  const { words, error } = useVocabulary(level);
   const [category, setCategory] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [idx, setIdx] = useState(0);
@@ -16,7 +18,7 @@ export default function QuizPage({ level, setLevel, rate }) {
   const [finished, setFinished] = useState(false);
 
   function start(cat) {
-    const qs = cat === "vocab" ? generateVocabQuestions(level) : QUIZ[level].grammar;
+    const qs = cat === "vocab" ? generateVocabQuestions(words) : QUIZ[level].grammar;
     setCategory(cat);
     setQuestions(qs);
     setIdx(0);
@@ -54,11 +56,13 @@ export default function QuizPage({ level, setLevel, rate }) {
       <div>
         <LevelTabs level={level} setLevel={(l) => { setLevel(l); reset(); }} />
         <div className="grid sm:grid-cols-2 gap-4 mt-6">
-          <button onClick={() => start("vocab")} className="rounded-2xl p-6 text-left transition hover:-translate-y-1" style={{ backgroundColor: C.card, boxShadow: "0 1px 3px rgba(22,33,62,0.08)" }}>
+          <button onClick={() => start("vocab")} disabled={!words} className="rounded-2xl p-6 text-left transition enabled:hover:-translate-y-1 disabled:opacity-60" style={{ backgroundColor: C.card, boxShadow: "0 1px 3px rgba(22,33,62,0.08)" }}>
             <div className="text-xs font-semibold" style={{ color: C.teal }}>VOCABULARY</div>
             <div className="text-lg font-bold mt-1" style={{ color: C.ink, fontFamily: "'Fredoka', sans-serif" }}>單字測驗</div>
             <div className="text-sm mt-1" style={{ color: C.inkSoft }}>
-              {Math.min(VOCAB_QUIZ_COUNT, VOCAB[level].length)} 題 · 從 {VOCAB[level].length} 個單字中隨機出題
+              {words
+                ? `${Math.min(VOCAB_QUIZ_COUNT, words.length)} 題 · 從 ${words.length} 個單字中隨機出題`
+                : error ? "無法載入單字，請重新整理頁面。" : "正在載入單字…"}
             </div>
           </button>
           <button onClick={() => start("grammar")} className="rounded-2xl p-6 text-left transition hover:-translate-y-1" style={{ backgroundColor: C.card, boxShadow: "0 1px 3px rgba(22,33,62,0.08)" }}>

@@ -12,9 +12,9 @@ src/
       elem2.js      國小中年級單字（114 字）
       elem3.js      國小高年級單字（112 字）
       middle.js     國中單字（1200 字）
-      high.js       高中單字（1614 字，持續擴充中）
+      high.js       高中單字（7000 筆）
       toefl.js      托福單字（12 字）
-      index.js      彙整所有單字 + LEVELS 定義
+      index.js      LEVELS 定義與各級單字的按需載入
     quiz.js         文法測驗題庫（含中文翻譯）
   components/       共用元件（SpeakButton、SpeedControl、LevelPath、LevelTabs）
   pages/            四個主要頁面（Home、Learn、Bank、Quiz）

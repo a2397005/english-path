@@ -1,5 +1,3 @@
-import { VOCAB } from "../data/vocab/index.js";
-
 export function speak(text, rate = 0.85) {
   if (!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
@@ -23,13 +21,13 @@ export function shuffleArray(arr) {
 
 export const VOCAB_QUIZ_COUNT = 8;
 
-export function generateVocabQuestions(level, count = VOCAB_QUIZ_COUNT) {
-  const words = VOCAB[level];
+export function generateVocabQuestions(words, count = VOCAB_QUIZ_COUNT) {
   const n = Math.min(count, words.length);
   const chosen = shuffleArray(words).slice(0, n);
   return chosen.map((w) => {
     const others = words.filter((o) => o.word !== w.word && o.meaning !== w.meaning);
-    const distractors = shuffleArray(others).slice(0, 3).map((o) => o.meaning);
+    const meanings = [...new Set(others.map((o) => o.meaning))];
+    const distractors = shuffleArray(meanings).slice(0, 3);
     const opts = shuffleArray([w.meaning, ...distractors]);
     const a = opts.indexOf(w.meaning);
     return {
